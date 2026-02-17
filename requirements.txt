@@ -1,7 +1,0 @@
-connectapi
-DBI
-dplyr
-ellmer
-odbc
-querychat
-shiny
