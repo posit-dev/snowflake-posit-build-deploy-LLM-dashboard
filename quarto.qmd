@@ -1,0 +1,167 @@
+---
+title: "Analyze HMDA Mortgage Data with Snowflake Cortex AI and Positron Assistant"
+format: html
+editor_options:
+  chunk_output_type: console
+execute:
+  echo: false
+  warning: false
+  error: false
+---
+
+The Snowflake guide this document accompanies:
+
+- Uses the Home Mortgage Disclosure Act (HMDA) dataset from Snowflake's free public data
+- Leverages Cortex AI, Databot, Positron Assistant, `ellmer`, and `querychat` for LLM interactions in Posit Workbench
+- Deploys to Posit Connect for easy and secure sharing and collaboration
+
+## Connect to data
+
+```{r}
+# Load required libraries
+library(DBI)
+library(odbc)
+library(dplyr)
+library(connectapi)
+
+get_connection <- function() {
+  # Define connection parameters
+  warehouse <- "MORTGAGE_DATA_WH"
+  database <- "SNOWFLAKE_PUBLIC_DATA_FREE"
+  schema <- "HOME_MORTGAGE_DISCLOSURE_ATTRIBUTES"
+
+  # Running in Posit Workbench
+  if (!is.null(Sys.getenv("SNOWFLAKE_HOME", unset = NULL)) &&
+      Sys.getenv("RSTUDIO_PRODUCT") != "CONNECT") {
+
+    con <- DBI::dbConnect(
+      odbc::snowflake(),
+      connection_name = "workbench",
+      warehouse = warehouse,
+      database = database,
+      schema = schema
+    )
+
+  # Running in Posit Connect (deployed app)
+  } else if (Sys.getenv("RSTUDIO_PRODUCT") == "CONNECT") {
+
+    # Get Posit Connect client and user session token
+    client <- connectapi::connect()
+    user_session_token <- shiny::session$request$HTTP_POSIT_CONNECT_USER_SESSION_TOKEN
+
+    # Get OAuth credentials for the viewer
+    credentials <- connectapi::get_oauth_credentials(client, user_session_token)
+    token <- credentials$access_token
+
+    con <- DBI::dbConnect(
+      odbc::snowflake(),
+      account = "YOUR_ACCOUNT",  # Replace with your Snowflake account
+      warehouse = warehouse,
+      database = database,
+      schema = schema,
+      authenticator = "OAUTH",
+      token = token
+    )
+
+  } else {
+    stop("No Snowflake credentials found. Ensure you're running in Workbench or Connect.")
+  }
+
+  return(con)
+}
+
+# Create connection
+con <- get_connection()
+
+# Access the mortgage data table
+mortgage_data <- tbl(con, "HOME_MORTGAGE_DISCLOSURE")
+
+message("Successfully established secure connection to Snowflake!")
+```
+
+## Configure `ellmer`
+
+```{r}
+library(ellmer)
+
+# Initialize chat_snowflake with Snowflake Cortex AI
+chat <- chat_snowflake(
+  system_prompt = "You are a mortgage lending and housing finance data analysis expert",
+  model = "snowflake-arctic",  # Choose from Cortex AI models: snowflake-arctic, mistral-large, llama3-70b, etc.
+  account = Sys.getenv("SNOWFLAKE_ACCOUNT")
+)
+
+# Test the connection
+response <- chat$chat("What patterns do you see in home mortgage lending data?")
+cat(response)
+```
+
+## Configure `querychat`
+
+```{r}
+library(querychat)
+
+# Launch interactive querychat app with the mortgage data
+# The app provides a chat interface for natural language data exploration
+querychat_app(
+  data = mortgage_data,
+  client = chat  # Use the configured Snowflake Cortex AI chat
+)
+```
+
+## Build a Shiny app
+
+```{r}
+#| eval: false
+
+library(shiny)
+library(ellmer)
+library(DBI)
+library(dplyr)
+
+ui <- fluidPage(
+  titlePanel("HMDA Data Explorer with Snowflake Cortex AI"),
+  sidebarLayout(
+    sidebarPanel(
+      textAreaInput("user_question", "Ask a question about mortgage data:",
+                    placeholder = "What are the most common loan types?"),
+      actionButton("ask", "Ask Cortex AI")
+    ),
+    mainPanel(
+      h4("AI Response:"),
+      verbatimTextOutput("response"),
+      h4("Data Results:"),
+      tableOutput("results")
+    )
+  )
+)
+
+server <- function(input, output, session) {
+  # Initialize connection and chat
+  con <- get_connection()
+  mortgage_data <- tbl(con, "HOME_MORTGAGE_DISCLOSURE")
+
+  chat <- chat_snowflake(
+    system_prompt = paste(
+      "You are a mortgage lending data expert.",
+      "Help users understand HMDA mortgage data patterns and insights.",
+      "When asked about data, suggest relevant SQL queries or analyses."
+    ),
+    model = "snowflake-arctic",
+    account = Sys.getenv("SNOWFLAKE_ACCOUNT")
+  )
+
+  observeEvent(input$ask, {
+    req(input$user_question)
+
+    output$response <- renderText({
+      chat$chat(input$user_question)
+    })
+
+    # Example: Could execute data queries based on the question
+    # This would require parsing the question or using AI to generate queries
+  })
+}
+
+shinyApp(ui, server)
+```
