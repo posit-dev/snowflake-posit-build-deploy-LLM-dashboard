@@ -45,7 +45,7 @@ get_connection <- function() {
   schema <- "PUBLIC_DATA_FREE"
 
   # Running in Posit Workbench
-  if (!is.null(Sys.getenv("SNOWFLAKE_HOME", unset = NULL)) &&
+  if (nzchar(Sys.getenv("SNOWFLAKE_HOME")) &&
       Sys.getenv("RSTUDIO_PRODUCT") != "CONNECT") {
 
     con <- DBI::dbConnect(
@@ -93,7 +93,7 @@ mortgage_data <- tbl(con, "HOME_MORTGAGE_DISCLOSURE_ATTRIBUTES")
 message("Successfully established secure connection to Snowflake!")
 ```
 
-## Exploratory data analysis with Databot 
+## Exploratory data analysis with Databot
 
 Let's step out of our Quarto document and open Databot to explore our mortgage data.
 
@@ -109,7 +109,7 @@ Provide Databot some prompts such as:
 Explore the relationship between loan amounts and property types
 ```
 
-or 
+or
 
 ```
 How do loan approval rates vary across different states?
@@ -144,7 +144,7 @@ message("- Cortex AI Model: ", cortex_model)
 message("- Snowflake Account: ", snowflake_account)
 ```
 
-### Test ellmer connection
+### Test {ellmer} connection
 
 ```{r}
 library(ellmer)
@@ -161,9 +161,7 @@ response <- chat$chat("What patterns do you see in home mortgage lending data?")
 cat(response)
 ```
 
-### Optional: Explore with querychat
-
-The {querychat} package provides a ready-to-use chat interface for data exploration. If you want to interactively explore the data before building your custom app, you can run querychat in a separate R session:
+### Optional: Explore with {querychat}
 
 ```r
 # Run this in a separate R session or console
@@ -197,7 +195,7 @@ get_connection <- function() {
   schema <- "PUBLIC_DATA_FREE"
 
   # Running in Posit Workbench
-  if (!is.null(Sys.getenv("SNOWFLAKE_HOME", unset = NULL)) &&
+  if (nzchar(Sys.getenv("SNOWFLAKE_HOME")) &&
       Sys.getenv("RSTUDIO_PRODUCT") != "CONNECT") {
 
     con <- DBI::dbConnect(
