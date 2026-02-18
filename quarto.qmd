@@ -162,13 +162,63 @@ querychat_app(
 ### Build a Shiny app
 
 ```{r}
-#| eval: false
-
+# Create app.R file with Shiny application code
+app_code <- '
 library(shiny)
 library(ellmer)
 library(DBI)
+library(odbc)
 library(dplyr)
+library(connectapi)
 
+# Connection function
+get_connection <- function() {
+  # Define connection parameters
+  warehouse <- "MORTGAGE_DATA_WH"
+  database <- "SNOWFLAKE_PUBLIC_DATA_FREE"
+  schema <- "PUBLIC_DATA_FREE"
+
+  # Running in Posit Workbench
+  if (!is.null(Sys.getenv("SNOWFLAKE_HOME", unset = NULL)) &&
+      Sys.getenv("RSTUDIO_PRODUCT") != "CONNECT") {
+
+    con <- DBI::dbConnect(
+      odbc::snowflake(),
+      connection_name = "workbench",
+      warehouse = warehouse,
+      database = database,
+      schema = schema
+    )
+
+  # Running in Posit Connect (deployed app)
+  } else if (Sys.getenv("RSTUDIO_PRODUCT") == "CONNECT") {
+
+    # Get Posit Connect client and user session token
+    client <- connectapi::connect()
+    user_session_token <- shiny::session$request$HTTP_POSIT_CONNECT_USER_SESSION_TOKEN
+
+    # Get OAuth credentials for the viewer
+    credentials <- connectapi::get_oauth_credentials(client, user_session_token)
+    token <- credentials$access_token
+
+    con <- DBI::dbConnect(
+      odbc::snowflake(),
+      account = "YOUR_ACCOUNT",  # Replace with your Snowflake account
+      warehouse = warehouse,
+      database = database,
+      schema = schema,
+      authenticator = "OAUTH",
+      token = token
+    )
+
+  } else {
+    stop("No Snowflake credentials found. Ensure you are running in Workbench or Connect.")
+  }
+
+  return(con)
+}
+
+# Define UI
 ui <- fluidPage(
   titlePanel("HMDA Data Explorer with Snowflake Cortex AI"),
   sidebarLayout(
@@ -186,6 +236,7 @@ ui <- fluidPage(
   )
 )
 
+# Define server
 server <- function(input, output, session) {
   # Initialize connection and chat
   con <- get_connection()
@@ -213,5 +264,12 @@ server <- function(input, output, session) {
   })
 }
 
-shinyApp(ui, server)
+# Run the application
+shinyApp(ui = ui, server = server)
+'
+
+# Write the app code to app.R file
+writeLines(app_code, "app.R")
+
+message("Shiny app created successfully! Run the app with: shiny::runApp('app.R')")
 ```
