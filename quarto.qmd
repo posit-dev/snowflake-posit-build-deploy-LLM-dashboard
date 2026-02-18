@@ -15,6 +15,12 @@ The Snowflake guide this document accompanies:
 - Leverages Cortex AI, Databot, Positron Assistant, `ellmer`, and `querychat` for LLM interactions in Posit Workbench
 - Deploys to Posit Connect for easy and secure sharing and collaboration
 
+## Install packages
+
+```{r}
+install.packages(c("connectapi", "DBI", "dplyr", "ellmer", "odbc", "querychat", "shiny"))   
+```
+
 ## Connect to data
 
 ```{r}
@@ -28,7 +34,7 @@ get_connection <- function() {
   # Define connection parameters
   warehouse <- "MORTGAGE_DATA_WH"
   database <- "SNOWFLAKE_PUBLIC_DATA_FREE"
-  schema <- "HOME_MORTGAGE_DISCLOSURE_ATTRIBUTES"
+  schema <- "PUBLIC_DATA_FREE"
 
   # Running in Posit Workbench
   if (!is.null(Sys.getenv("SNOWFLAKE_HOME", unset = NULL)) &&
@@ -74,7 +80,7 @@ get_connection <- function() {
 con <- get_connection()
 
 # Access the mortgage data table
-mortgage_data <- tbl(con, "HOME_MORTGAGE_DISCLOSURE")
+mortgage_data <- tbl(con, "HOME_MORTGAGE_DISCLOSURE_ATTRIBUTES")
 
 message("Successfully established secure connection to Snowflake!")
 ```
