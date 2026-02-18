@@ -45,7 +45,7 @@ get_connection <- function() {
   schema <- "PUBLIC_DATA_FREE"
 
   # Running in Posit Workbench
-  if (!is.null(Sys.getenv("SNOWFLAKE_HOME", unset = NULL)) &&
+  if (nzchar(Sys.getenv("SNOWFLAKE_HOME")) &&
       Sys.getenv("RSTUDIO_PRODUCT") != "CONNECT") {
 
     con <- DBI::dbConnect(
@@ -129,7 +129,7 @@ After Databot creates the file, review the generated `.qmd` file to verify the c
 
 Now that we've done some exploratory data analysis, let's create our interactive dashboard using Snowflake Cortex AI. We'll first test that ellmer can connect to Cortex AI, then build a custom Shiny app that you can deploy to Posit Connect.
 
-### Test ellmer connection
+### Test {ellmer} connection
 
 ```{r}
 library(ellmer)
@@ -146,9 +146,7 @@ response <- chat$chat("What patterns do you see in home mortgage lending data?")
 cat(response)
 ```
 
-### Optional: Explore with querychat
-
-The {querychat} package provides a ready-to-use chat interface for data exploration. If you want to interactively explore the data before building your custom app, you can run querychat in a separate R session:
+### Optional: Explore with {querychat}
 
 ```r
 # Run this in a separate R session or console
@@ -166,7 +164,7 @@ querychat_app(
 
 ```{r}
 # Create app.R file with Shiny application code
-app_code <- '
+app_code <- 
 library(shiny)
 library(ellmer)
 library(DBI)
@@ -182,7 +180,7 @@ get_connection <- function() {
   schema <- "PUBLIC_DATA_FREE"
 
   # Running in Posit Workbench
-  if (!is.null(Sys.getenv("SNOWFLAKE_HOME", unset = NULL)) &&
+  if (nzchar(Sys.getenv("SNOWFLAKE_HOME")) &&
       Sys.getenv("RSTUDIO_PRODUCT") != "CONNECT") {
 
     con <- DBI::dbConnect(
