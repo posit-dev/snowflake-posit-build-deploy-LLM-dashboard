@@ -129,16 +129,31 @@ After Databot creates the file, review the generated `.qmd` file to verify the c
 
 Now that we've done some exploratory data analysis, let's create our interactive dashboard using Snowflake Cortex AI. We'll first test that ellmer can connect to Cortex AI, then build a custom Shiny app that you can deploy to Posit Connect.
 
+### Configure your settings
+
+Before testing the connection, let's capture your settings for use in the dashboard:
+
+```{r}
+# Capture user settings
+cortex_model <- "snowflake-arctic"  # Choose from: snowflake-arctic, mistral-large, llama3-70b, etc.
+snowflake_account <- Sys.getenv("SNOWFLAKE_ACCOUNT")  # Your Snowflake account identifier
+your_snowflake_account <- "YOUR_ACCOUNT"  # Replace with your Snowflake account for Connect deployment
+
+message("Settings captured:")
+message("- Cortex AI Model: ", cortex_model)
+message("- Snowflake Account: ", snowflake_account)
+```
+
 ### Test ellmer connection
 
 ```{r}
 library(ellmer)
 
-# Initialize chat_snowflake with Snowflake Cortex AI
+# Initialize chat_snowflake with Snowflake Cortex AI using your settings
 chat <- chat_snowflake(
   system_prompt = "You are a mortgage lending and housing finance data analysis expert",
-  model = "snowflake-arctic",  # Choose from Cortex AI models: snowflake-arctic, mistral-large, llama3-70b, etc.
-  account = Sys.getenv("SNOWFLAKE_ACCOUNT")
+  model = cortex_model,
+  account = snowflake_account
 )
 
 # Test the connection
@@ -165,8 +180,8 @@ querychat_app(
 ### Build a Shiny app
 
 ```{r}
-# Create app.R file with Shiny application code
-app_code <- '
+# Create app.R file with Shiny application code using your captured settings
+app_code <- sprintf('
 library(shiny)
 library(ellmer)
 library(DBI)
@@ -206,7 +221,7 @@ get_connection <- function() {
 
     con <- DBI::dbConnect(
       odbc::snowflake(),
-      account = "YOUR_ACCOUNT",  # Replace with your Snowflake account
+      account = "%s",  # Your Snowflake account from settings
       warehouse = warehouse,
       database = database,
       schema = schema,
@@ -251,7 +266,7 @@ server <- function(input, output, session) {
       "Help users understand HMDA mortgage data patterns and insights.",
       "When asked about data, suggest relevant SQL queries or analyses."
     ),
-    model = "snowflake-arctic",
+    model = "%s",  # Your chosen Cortex AI model
     account = Sys.getenv("SNOWFLAKE_ACCOUNT")
   )
 
@@ -269,10 +284,13 @@ server <- function(input, output, session) {
 
 # Run the application
 shinyApp(ui = ui, server = server)
-'
+', your_snowflake_account, cortex_model)
 
 # Write the app code to app.R file
 writeLines(app_code, "app.R")
 
-message("Shiny app created successfully! Run the app with: shiny::runApp('app.R')")
+message("Shiny app created successfully with your settings!")
+message("- Cortex AI Model: ", cortex_model)
+message("- Snowflake Account: ", your_snowflake_account)
+message("\nRun the app with: shiny::runApp('app.R')")
 ```
