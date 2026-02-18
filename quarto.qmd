@@ -12,13 +12,21 @@ execute:
 The Snowflake guide this document accompanies:
 
 - Uses the Home Mortgage Disclosure Act (HMDA) dataset from Snowflake's free public data
-- Leverages Cortex AI, Databot, Positron Assistant, `ellmer`, and `querychat` for LLM interactions in Posit Workbench
+- Leverages Cortex AI, Databot, Positron Assistant, {ellmer}, and {querychat} for LLM interactions in Posit Workbench
 - Deploys to Posit Connect for easy and secure sharing and collaboration
 
 ## Install packages
 
 ```{r}
-install.packages(c("connectapi", "DBI", "dplyr", "ellmer", "odbc", "querychat", "shiny"))   
+# Create user library if it doesn't exist
+dir.create(Sys.getenv("R_LIBS_USER"), showWarnings = FALSE, recursive = TRUE)
+
+# Install packages to user library
+install.packages(
+  c("connectapi", "DBI", "dplyr", "ellmer", "odbc", "querychat", "shiny", "ggplot2"),
+  lib = Sys.getenv("R_LIBS_USER"),
+  repos = "https://package-manager/cran/__linux__/jammy/latest"
+)
 ```
 
 ## Connect to data
@@ -85,7 +93,43 @@ mortgage_data <- tbl(con, "HOME_MORTGAGE_DISCLOSURE_ATTRIBUTES")
 message("Successfully established secure connection to Snowflake!")
 ```
 
-## Configure `ellmer`
+## Exploratory data analysis with Databot 
+
+Let's step out of our Quarto document and open Databot to explore our mortgage data.
+
+1. Open the Command Palette (`Cmd/Ctrl+Shift+P`).
+
+2. Type "Open Databot" and select it.
+
+3. The Databot panel will open, ready to analyze your mortgage data.
+
+Provide Databot some prompts such as:
+
+```
+Explore the relationship between loan amounts and property types
+```
+
+or 
+
+```
+How do loan approval rates vary across different states?
+```
+
+Once you've explored the data, you can create a Quarto report to capture your findings.
+
+Ask Databot to create the report:
+
+```
+Create a .qmd file summarizing the mortgage data exploration
+```
+
+After Databot creates the file, review the generated `.qmd` file to verify the content and narrative. Then, render the report to preview it by clicking the **Preview** button, or running `quarto preview <filename>.qmd` in the terminal.
+
+## Build LLM Dashboard 
+
+Now that we've done some exploratory data analysis, let's create our interactive dashboard. First we need to configure {ellmer} and {querychat} to use Cortex AI. Then we can build the Shiny app.
+
+### Configure {ellmer}
 
 ```{r}
 library(ellmer)
@@ -102,7 +146,7 @@ response <- chat$chat("What patterns do you see in home mortgage lending data?")
 cat(response)
 ```
 
-## Configure `querychat`
+### Configure {querychat}
 
 ```{r}
 library(querychat)
@@ -115,7 +159,7 @@ querychat_app(
 )
 ```
 
-## Build a Shiny app
+### Build a Shiny app
 
 ```{r}
 #| eval: false
@@ -145,7 +189,7 @@ ui <- fluidPage(
 server <- function(input, output, session) {
   # Initialize connection and chat
   con <- get_connection()
-  mortgage_data <- tbl(con, "HOME_MORTGAGE_DISCLOSURE")
+  mortgage_data <- tbl(con, "HOME_MORTGAGE_DISCLOSURE_ATTRIBUTES")
 
   chat <- chat_snowflake(
     system_prompt = paste(
