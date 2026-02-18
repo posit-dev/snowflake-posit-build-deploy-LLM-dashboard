@@ -137,7 +137,6 @@ Before testing the connection, let's capture your settings for use in the dashbo
 # Capture user settings
 cortex_model <- "snowflake-arctic"  # Choose from: snowflake-arctic, mistral-large, llama3-70b, etc.
 snowflake_account <- Sys.getenv("SNOWFLAKE_ACCOUNT")  # Your Snowflake account identifier
-your_snowflake_account <- "YOUR_ACCOUNT"  # Replace with your Snowflake account for Connect deployment
 
 message("Settings captured:")
 message("- Cortex AI Model: ", cortex_model)
@@ -282,13 +281,13 @@ server <- function(input, output, session) {
 
 # Run the application
 shinyApp(ui = ui, server = server)
-', your_snowflake_account, cortex_model)
+', snowflake_account, cortex_model)
 
 # Write the app code to app.R file
 writeLines(app_code, "app.R")
 
 message("Shiny app created successfully with your settings!")
 message("- Cortex AI Model: ", cortex_model)
-message("- Snowflake Account: ", your_snowflake_account)
+message("- Snowflake Account: ", snowflake_account)
 message("\nRun the app with: shiny::runApp('app.R')")
 ```
