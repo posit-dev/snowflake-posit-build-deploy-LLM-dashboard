@@ -125,11 +125,11 @@ Create a .qmd file summarizing the mortgage data exploration
 
 After Databot creates the file, review the generated `.qmd` file to verify the content and narrative. Then, render the report to preview it by clicking the **Preview** button, or running `quarto preview <filename>.qmd` in the terminal.
 
-## Build LLM Dashboard 
+## Build LLM Dashboard
 
-Now that we've done some exploratory data analysis, let's create our interactive dashboard. First we need to configure {ellmer} and {querychat} to use Cortex AI. Then we can build the Shiny app.
+Now that we've done some exploratory data analysis, let's create our interactive dashboard using Snowflake Cortex AI. We'll first test that ellmer can connect to Cortex AI, then build a custom Shiny app that you can deploy to Posit Connect.
 
-### Configure {ellmer}
+### Test ellmer connection
 
 ```{r}
 library(ellmer)
@@ -146,18 +146,21 @@ response <- chat$chat("What patterns do you see in home mortgage lending data?")
 cat(response)
 ```
 
-### Configure {querychat}
+### Optional: Explore with querychat
 
-```{r}
+The {querychat} package provides a ready-to-use chat interface for data exploration. If you want to interactively explore the data before building your custom app, you can run querychat in a separate R session:
+
+```r
+# Run this in a separate R session or console
 library(querychat)
 
-# Launch interactive querychat app with the mortgage data
-# The app provides a chat interface for natural language data exploration
 querychat_app(
   data = mortgage_data,
   client = chat  # Use the configured Snowflake Cortex AI chat
 )
 ```
+
+**Note:** `querychat_app()` launches an interactive application that will block further code execution. Close the app when you're done exploring to continue with the next steps.
 
 ### Build a Shiny app
 
