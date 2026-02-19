@@ -88,39 +88,9 @@ message("Successfully established secure connection to Snowflake!")
 
 ## Exploratory data analysis with Databot
 
-Let's step out of our Quarto document and open Databot to explore our mortgage data.
-
-1. Open the Command Palette (`Cmd/Ctrl+Shift+P`).
-
-2. Type "Open Databot" and select it.
-
-3. The Databot panel will open, ready to analyze your mortgage data.
-
-Provide Databot some prompts such as:
-
-```
-Explore the relationship between loan amounts and property types
-```
-
-or
-
-```
-How do loan approval rates vary across different states?
-```
-
-Once you've explored the data, you can create a Quarto report to capture your findings.
-
-Ask Databot to create the report:
-
-```
-Create a .qmd file summarizing the mortgage data exploration
-```
-
-After Databot creates the file, review the generated `.qmd` file to verify the content and narrative. Then, render the report to preview it by clicking the **Preview** button, or running `quarto preview <filename>.qmd` in the terminal.
+Let's step out of our Quarto document and open Databot to explore our mortgage data. Come back when you're ready to build the dashboard.
 
 ## Build LLM Dashboard
-
-Now that we've done some exploratory data analysis, let's create our interactive dashboard using Snowflake Cortex AI. We'll first test that ellmer can connect to Cortex AI, then build a custom Shiny app that you can deploy to Posit Connect.
 
 ### Configure your settings
 
@@ -128,7 +98,7 @@ Before testing the connection, let's capture your settings for use in the dashbo
 
 ```{r}
 # Capture user settings
-cortex_model <- "snowflake-arctic"  # Choose from: snowflake-arctic, mistral-large, llama3-70b, etc.
+cortex_model <- "snowflake-arctic"  # Choose from available models: snowflake-arctic, mistral-large, llama3-70b, etc.
 
 message("Settings captured:")
 message("- Cortex AI Model: ", cortex_model)
@@ -139,8 +109,8 @@ message("- Cortex AI Model: ", cortex_model)
 ```{r}
 library(ellmer)
 
-# Initialize chat_snowflake with Snowflake Cortex AI using your settings
-chat <- chat_snowflake(
+# Initialize chat with Snowflake Cortex AI using your settings
+chat <- chat(
   system_prompt = "You are a mortgage lending and housing finance data analysis expert",
   model = cortex_model,
   account = Sys.getenv("SNOWFLAKE_ACCOUNT")
@@ -248,7 +218,7 @@ server <- function(input, output, session) {
   con <- get_connection()
   mortgage_data <- tbl(con, "HOME_MORTGAGE_DISCLOSURE_ATTRIBUTES")
 
-  chat <- chat_snowflake(
+  chat <- cha(
     system_prompt = paste(
       "You are a mortgage lending data expert.",
       "Help users understand HMDA mortgage data patterns and insights.",
