@@ -140,9 +140,9 @@ message("- Cortex AI Model: ", cortex_model)
 library(ellmer)
 
 # Initialize chat_snowflake with Snowflake Cortex AI using your settings
-chat <- chat_snowflake(
+chat <- chat(
+  name = paste0("snowflake/", cortex_model),
   system_prompt = "You are a mortgage lending and housing finance data analysis expert",
-  model = cortex_model,
   account = Sys.getenv("SNOWFLAKE_ACCOUNT")
 )
 
@@ -153,8 +153,10 @@ cat(response)
 
 ### Optional: Explore with {querychat}
 
+
+**Note:** `querychat_app()` launches an interactive application that will block further code execution. Close the app and stop the function when you're done exploring to continue with the next steps.
+
 ```r
-# Run this in a separate R session or console
 library(querychat)
 
 querychat_app(
@@ -163,7 +165,6 @@ querychat_app(
 )
 ```
 
-**Note:** `querychat_app()` launches an interactive application that will block further code execution. Close the app when you're done exploring to continue with the next steps.
 
 ### Build a Shiny app
 
@@ -209,7 +210,7 @@ get_connection <- function() {
 
     con <- DBI::dbConnect(
       odbc::snowflake(),
-      account = "%s",  # Your Snowflake account from settings
+      account = Sys.getenv("SNOWFLAKE_ACCOUNT"),
       warehouse = warehouse,
       database = database,
       schema = schema,
@@ -248,14 +249,14 @@ server <- function(input, output, session) {
   con <- get_connection()
   mortgage_data <- tbl(con, "HOME_MORTGAGE_DISCLOSURE_ATTRIBUTES")
 
-  chat <- chat_snowflake(
-    system_prompt = paste(
-      "You are a mortgage lending data expert.",
-      "Help users understand HMDA mortgage data patterns and insights.",
-      "When asked about data, suggest relevant SQL queries or analyses."
-    ),
-    model = "%s",  # Your chosen Cortex AI model
-    account = Sys.getenv("SNOWFLAKE_ACCOUNT")
+  chat <- chat(
+  name = paste0("snowflake/", "%s"),  # Your chosen Cortex AI model
+  system_prompt = paste(
+    "You are a mortgage lending data expert.",
+    "Help users understand HMDA mortgage data patterns and insights.",
+    "When asked about data, suggest relevant SQL queries or analyses."
+  ),
+  account = Sys.getenv("SNOWFLAKE_ACCOUNT")
   )
 
   observeEvent(input$ask, {
