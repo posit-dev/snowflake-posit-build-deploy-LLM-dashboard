@@ -69,7 +69,7 @@ get_connection <- function() {
 
     con <- DBI::dbConnect(
       odbc::snowflake(),
-      account = "YOUR_ACCOUNT",  # Replace with your Snowflake account
+      account = "YOUR_ACCOUNT",
       warehouse = warehouse,
       database = database,
       schema = schema,
@@ -136,11 +136,9 @@ Before testing the connection, let's capture your settings for use in the dashbo
 ```{r}
 # Capture user settings
 cortex_model <- "snowflake-arctic"  # Choose from: snowflake-arctic, mistral-large, llama3-70b, etc.
-snowflake_account <- Sys.getenv("SNOWFLAKE_ACCOUNT")  # Your Snowflake account identifier
 
 message("Settings captured:")
 message("- Cortex AI Model: ", cortex_model)
-message("- Snowflake Account: ", snowflake_account)
 ```
 
 ### Test {ellmer} connection
@@ -152,7 +150,7 @@ library(ellmer)
 chat <- chat_snowflake(
   system_prompt = "You are a mortgage lending and housing finance data analysis expert",
   model = cortex_model,
-  account = snowflake_account
+  account = Sys.getenv("SNOWFLAKE_ACCOUNT")
 )
 
 # Test the connection
@@ -281,13 +279,12 @@ server <- function(input, output, session) {
 
 # Run the application
 shinyApp(ui = ui, server = server)
-', snowflake_account, cortex_model)
+', cortex_model)
 
 # Write the app code to app.R file
 writeLines(app_code, "app.R")
 
 message("Shiny app created successfully with your settings!")
 message("- Cortex AI Model: ", cortex_model)
-message("- Snowflake Account: ", snowflake_account)
 message("\nRun the app with: shiny::runApp('app.R')")
 ```
