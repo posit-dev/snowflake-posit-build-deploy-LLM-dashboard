@@ -18,15 +18,8 @@ The Snowflake guide this document accompanies:
 ## Install packages
 
 ```{r}
-# Create user library if it doesn't exist
-dir.create(Sys.getenv("R_LIBS_USER"), showWarnings = FALSE, recursive = TRUE)
-
-# Install packages to user library
-install.packages(
-  c("connectapi", "DBI", "dplyr", "ellmer", "odbc", "querychat", "shiny", "ggplot2"),
-  lib = Sys.getenv("R_LIBS_USER"),
-  repos = "https://package-manager/cran/__linux__/jammy/latest"
-)
+install.packages("renv")
+renv::restore()
 ```
 
 ## Connect to data
