@@ -29,6 +29,7 @@ renv::restore()
 library(DBI)
 library(odbc)
 library(dplyr)
+library(dbplyr)
 library(connectapi)
 
 get_connection <- function() {
@@ -146,6 +147,7 @@ library(ellmer)
 library(DBI)
 library(odbc)
 library(dplyr)
+library(dbplyr)
 library(connectapi)
 
 # Connection function
