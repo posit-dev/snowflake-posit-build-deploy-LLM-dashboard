@@ -99,7 +99,7 @@ Before testing the connection, let's capture your settings for use in the dashbo
 
 ```{r}
 # Capture user settings
-cortex_model <- "claude-sonnet-4.5"  # Choose from: claude-sonnet-4, claude-sonnet-4.5, claude-haiku-4.5, gpt-4.1, gpt-5
+cortex_model <- "claude-3-5-sonnet"
 
 message("Settings captured:")
 message("- Cortex AI Model: ", cortex_model)
@@ -127,7 +127,7 @@ cat(response)
 
 **Note:** `querychat_app()` launches an interactive application that will block further code execution. Close the app and stop the function when you're done exploring to continue with the next steps.
 
-```r
+```{r}
 library(querychat)
 
 querychat_app(
