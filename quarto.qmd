@@ -99,7 +99,7 @@ Before testing the connection, let's capture your settings for use in the dashbo
 
 ```{r}
 # Capture user settings
-cortex_model <- "claude-3-5-sonnet"
+cortex_model <- "claude-3-7-sonnet"
 
 message("Settings captured:")
 message("- Cortex AI Model: ", cortex_model)
