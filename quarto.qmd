@@ -37,13 +37,16 @@ get_connection <- function() {
   schema <- "PUBLIC_DATA_FREE"
   account <- Sys.getenv("SNOWFLAKE_ACCOUNT")
 
-    con <- DBI::dbConnect(
-      odbc::snowflake(),
-      account = account,
-      warehouse = warehouse,
-      database = database,
-      schema = schema
-    )
+  con <- DBI::dbConnect(
+    odbc::snowflake(),
+    account = account,
+    warehouse = warehouse,
+    database = database,
+    schema = schema
+  )
+
+  return(con)
+}
 ```
 
 ## Exploratory data analysis with Databot
@@ -87,8 +90,8 @@ querychat_app(
 ### Build a Shiny app
 
 ```{r}
-# Create app.R file with Shiny application code using your captured settings
-app_code <- sprintf('
+# Create app.R file with Shiny application code
+app_code <- '
 library(shiny)
 library(ellmer)
 library(DBI)
@@ -103,16 +106,13 @@ get_connection <- function() {
   schema <- "PUBLIC_DATA_FREE"
   account <- Sys.getenv("SNOWFLAKE_ACCOUNT")
 
-    con <- DBI::dbConnect(
-      odbc::snowflake(),
-      account = account,
-      warehouse = warehouse,
-      database = database,
-      schema = schema
-    )
-  } else {
-    stop("No Snowflake credentials found. Ensure you are running in Workbench or Connect.")
-  }
+  con <- DBI::dbConnect(
+    odbc::snowflake(),
+    account = account,
+    warehouse = warehouse,
+    database = database,
+    schema = schema
+  )
 
   return(con)
 }
@@ -142,10 +142,10 @@ server <- function(input, output, session) {
   mortgage_data <- tbl(con, "HOME_MORTGAGE_DISCLOSURE_ATTRIBUTES")
 
   chat <- chat(
-  name = "snowflake/claude-sonnet-4-5",
-  system_prompt = "You are a mortgage lending and housing finance data analysis expert",
-  account = Sys.getenv("SNOWFLAKE_ACCOUNT")
-)
+    name = "snowflake/claude-sonnet-4-5",
+    system_prompt = "You are a mortgage lending and housing finance data analysis expert",
+    account = Sys.getenv("SNOWFLAKE_ACCOUNT")
+  )
 
   observeEvent(input$ask, {
     req(input$user_question)
@@ -161,12 +161,12 @@ server <- function(input, output, session) {
 
 # Run the application
 shinyApp(ui = ui, server = server)
-', cortex_model)
+'
 
 # Write the app code to app.R file
 writeLines(app_code, "app.R")
 
-message("Shiny app created successfully with your settings!")
-message("- Cortex AI Model: ", cortex_model)
+message("Shiny app created successfully!")
+message("- Cortex AI Model: snowflake/claude-sonnet-4-5")
 message("\nRun the app with: shiny::runApp('app.R')")
 ```
