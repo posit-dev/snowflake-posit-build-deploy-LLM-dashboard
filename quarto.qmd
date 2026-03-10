@@ -25,66 +25,28 @@ renv::restore()
 ## Connect to data
 
 ```{r}
-# Load required libraries
 library(DBI)
 library(odbc)
 library(dplyr)
 library(dbplyr)
-library(connectapi)
+library(connectcreds)
 
 get_connection <- function() {
-  # Define connection parameters
   warehouse <- "MORTGAGE_DATA_WH"
   database <- "SNOWFLAKE_PUBLIC_DATA_FREE"
   schema <- "PUBLIC_DATA_FREE"
+  account <- Sys.getenv("SNOWFLAKE_ACCOUNT")
 
-  # Running in Posit Workbench
-  if (nzchar(Sys.getenv("SNOWFLAKE_HOME")) &&
-      Sys.getenv("RSTUDIO_PRODUCT") != "CONNECT") {
-
-    con <- DBI::dbConnect(
-      odbc::snowflake(),
-      connection_name = "workbench",
-      warehouse = warehouse,
-      database = database,
-      schema = schema
-    )
-
-  # Running in Posit Connect (deployed app)
-  } else if (Sys.getenv("RSTUDIO_PRODUCT") == "CONNECT") {
-
-    # Get Posit Connect client and user session token
-    client <- connectapi::connect()
-    user_session_token <- shiny::session$request$HTTP_POSIT_CONNECT_USER_SESSION_TOKEN
-
-    # Get OAuth credentials for the viewer
-    credentials <- connectapi::get_oauth_credentials(client, user_session_token)
-    token <- credentials$access_token
-
-    con <- DBI::dbConnect(
-      odbc::snowflake(),
-      account = "YOUR_ACCOUNT",
-      warehouse = warehouse,
-      database = database,
-      schema = schema,
-      authenticator = "OAUTH",
-      token = token
-    )
-
-  } else {
-    stop("No Snowflake credentials found. Ensure you're running in Workbench or Connect.")
-  }
+  con <- DBI::dbConnect(
+    odbc::snowflake(),
+    account = account,
+    warehouse = warehouse,
+    database = database,
+    schema = schema
+  )
 
   return(con)
 }
-
-# Create connection
-con <- get_connection()
-
-# Access the mortgage data table
-mortgage_data <- tbl(con, "HOME_MORTGAGE_DISCLOSURE_ATTRIBUTES")
-
-message("Successfully established secure connection to Snowflake!")
 ```
 
 ## Exploratory data analysis with Databot
@@ -93,30 +55,18 @@ Let's step out of our Quarto document and open Databot to explore our mortgage d
 
 ## Build LLM Dashboard
 
-### Configure your settings
-
-Before testing the connection, let's capture your settings for use in the dashboard:
-
-```{r}
-# Capture user settings
-cortex_model <- "claude-3-7-sonnet"
-
-message("Settings captured:")
-message("- Cortex AI Model: ", cortex_model)
-```
-
 ### Test {ellmer} connection
 
 ```{r}
 library(ellmer)
 
-# Initialize chat_snowflake with Snowflake Cortex AI using your settings
+# Initialize chat with Snowflake Cortex AI
+
 chat <- chat(
-  name = paste0("snowflake/", cortex_model),
+  name = "snowflake/claude-sonnet-4-5",
   system_prompt = "You are a mortgage lending and housing finance data analysis expert",
   account = Sys.getenv("SNOWFLAKE_ACCOUNT")
 )
-
 # Test the connection
 response <- chat$chat("What patterns do you see in home mortgage lending data?")
 cat(response)
@@ -132,7 +82,7 @@ library(querychat)
 
 querychat_app(
   data = mortgage_data,
-  client = chat  # Use the configured Snowflake Cortex AI chat
+  client = chat  # Use the Snowflake Cortex AI chat configured with ellmer
 )
 ```
 
@@ -140,59 +90,29 @@ querychat_app(
 ### Build a Shiny app
 
 ```{r}
-# Create app.R file with Shiny application code using your captured settings
-app_code <- sprintf('
+# Create app.R file with Shiny application code
+app_code <- '
 library(shiny)
 library(ellmer)
 library(DBI)
 library(odbc)
 library(dplyr)
 library(dbplyr)
-library(connectapi)
+library(connectcreds)
 
-# Connection function
 get_connection <- function() {
-  # Define connection parameters
   warehouse <- "MORTGAGE_DATA_WH"
   database <- "SNOWFLAKE_PUBLIC_DATA_FREE"
   schema <- "PUBLIC_DATA_FREE"
+  account <- Sys.getenv("SNOWFLAKE_ACCOUNT")
 
-  # Running in Posit Workbench
-  if (nzchar(Sys.getenv("SNOWFLAKE_HOME")) &&
-      Sys.getenv("RSTUDIO_PRODUCT") != "CONNECT") {
-
-    con <- DBI::dbConnect(
-      odbc::snowflake(),
-      connection_name = "workbench",
-      warehouse = warehouse,
-      database = database,
-      schema = schema
-    )
-
-  # Running in Posit Connect (deployed app)
-  } else if (Sys.getenv("RSTUDIO_PRODUCT") == "CONNECT") {
-
-    # Get Posit Connect client and user session token
-    client <- connectapi::connect()
-    user_session_token <- shiny::session$request$HTTP_POSIT_CONNECT_USER_SESSION_TOKEN
-
-    # Get OAuth credentials for the viewer
-    credentials <- connectapi::get_oauth_credentials(client, user_session_token)
-    token <- credentials$access_token
-
-    con <- DBI::dbConnect(
-      odbc::snowflake(),
-      account = Sys.getenv("SNOWFLAKE_ACCOUNT"),
-      warehouse = warehouse,
-      database = database,
-      schema = schema,
-      authenticator = "OAUTH",
-      token = token
-    )
-
-  } else {
-    stop("No Snowflake credentials found. Ensure you are running in Workbench or Connect.")
-  }
+  con <- DBI::dbConnect(
+    odbc::snowflake(),
+    account = account,
+    warehouse = warehouse,
+    database = database,
+    schema = schema
+  )
 
   return(con)
 }
@@ -222,13 +142,9 @@ server <- function(input, output, session) {
   mortgage_data <- tbl(con, "HOME_MORTGAGE_DISCLOSURE_ATTRIBUTES")
 
   chat <- chat(
-  name = paste0("snowflake/", "%s"),  # Your chosen Cortex AI model
-  system_prompt = paste(
-    "You are a mortgage lending data expert.",
-    "Help users understand HMDA mortgage data patterns and insights.",
-    "When asked about data, suggest relevant SQL queries or analyses."
-  ),
-  account = Sys.getenv("SNOWFLAKE_ACCOUNT")
+    name = "snowflake/claude-sonnet-4-5",
+    system_prompt = "You are a mortgage lending and housing finance data analysis expert",
+    account = Sys.getenv("SNOWFLAKE_ACCOUNT")
   )
 
   observeEvent(input$ask, {
@@ -245,12 +161,12 @@ server <- function(input, output, session) {
 
 # Run the application
 shinyApp(ui = ui, server = server)
-', cortex_model)
+'
 
 # Write the app code to app.R file
 writeLines(app_code, "app.R")
 
-message("Shiny app created successfully with your settings!")
-message("- Cortex AI Model: ", cortex_model)
+message("Shiny app created successfully!")
+message("- Cortex AI Model: snowflake/claude-sonnet-4-5")
 message("\nRun the app with: shiny::runApp('app.R')")
 ```
