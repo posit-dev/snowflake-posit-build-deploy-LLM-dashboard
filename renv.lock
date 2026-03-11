@@ -313,7 +313,8 @@
     "bslib": {
       "Package": "bslib",
       "Version": "0.10.0",
-      "Source": "Repository"
+      "Source": "Repository",
+      "Repository": "CRAN"
     },
     "cachem": {
       "Package": "cachem",
