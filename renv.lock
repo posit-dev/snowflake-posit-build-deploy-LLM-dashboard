@@ -64,7 +64,8 @@
     "DT": {
       "Package": "DT",
       "Version": "0.34.0",
-      "Source": "Repository"
+      "Source": "Repository",
+      "Repository": "CRAN"
     },
     "R6": {
       "Package": "R6",
